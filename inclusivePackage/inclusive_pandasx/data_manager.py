@@ -43,8 +43,6 @@ class DataManager(self):
     def save_csv(self, filename):
         "save data in csv format..."
         self.filename = filename
-        self.data.to_csv(self.filename)
-
 
     def save_excel(self, filename):
         'save data in excel format'
