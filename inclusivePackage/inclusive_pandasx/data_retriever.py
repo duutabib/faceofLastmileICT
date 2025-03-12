@@ -10,6 +10,8 @@ class DataRetriever:
         return self.is_connected
 
     def get_data(self):
+        # data from source
         if connector():
             'source data and write to csv or EXcel'
+            'More details to implement...'
         return 0 
