@@ -25,7 +25,7 @@ def check_data_quality(data_stats, pop_stats):
     def unpack_stats(data_stats):
         mu, std, max_, min_ = data_stats["mean"], data_stats["std"], data_stats["max"], data_stats["min"]
         return mu, std, max_, min_
-        
+       
     mu, std, max_, min_ = unpack_stats(data_stats)
     pop_mu, pop_std, pop_max, pop_min = unpack_stats(pop_stats)
 
