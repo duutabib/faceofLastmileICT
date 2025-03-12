@@ -1,3 +1,8 @@
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
+
+@pd.api.extensions.register_dataframe_accessor("visualizer")
 class DataVisualizer:
     def __init__(self, fitDict, **kwargs,  ):
         self.fitDict = fitDict
@@ -55,4 +60,27 @@ class DataVisualizer:
             ax.axline((0.0, 0.0), slope=1, linestyle='--', color='red', linewidth=2.0)
             ax.set_title(f"$f(x, y) = a x^2 + b xy + cx+ dy+ ey^2 + f$: y-actual vs y_pred (R_sq={None} {poly_mse=:.3f})", fontsize=20)
             I = ax.scatter(y_actual, y_poly, color=color)
- 
+        return I
+
+
+# takes objects from the  visualizer, resize and saves it one of two formats {png, pdf}.
+@pd.api.extensions.register_dataframe_accessor("ImageHandler")
+class ImageHandler:
+    def __init__(self, img, name):
+        self.img = img 
+        self.name = name
+
+    # resize image
+    def _resize_image(self, width, height):
+        self.img = plt.gca()
+        self.img.set_size_inches(width, height)
+
+    # save image as pdf
+    def save_pdf(self):
+        self.img.savefig(f"{self.name}",
+                        format="pdf", bbox_inches="tight")
+
+    # save image as png 
+    def save_png(self):
+        self.img.savefig(f"{self.name}", 
+                        format="png", bbox_inches="tight")
