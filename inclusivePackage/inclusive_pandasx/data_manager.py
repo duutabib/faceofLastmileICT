@@ -17,13 +17,13 @@ class DataManager(self):
         self.usecols = usecols
         self.data = pd.read_csv(self.filename, usecols=self.usecols, **kwargs)
 
-    def get_col(self, col: list ) -> pandas.series:
+    def get_col(self, col: list ) -> pd.Series:
         'Implement one or many cols of data...'
         if not all(item in self.data.columns.values for item in col):
             raise KeyError(f"{col} not in data columns")
         return self.data.loc[:, col] 
 
-    def get_row(self, row: typing.Union[str, int]) -> pandas.series:
+    def get_row(self, row: typing.Union[str, int]) -> pd.Series:
         'Implement for one or many row...'
         if not all(item in self.data.columns.values for item in row):
             raise KeyError(f"{row} not in data rows")
@@ -39,7 +39,7 @@ class DataManager(self):
         "returns the number of cols for data"
         return len(self.data.columns)       
 
-    def deduplicate(self, inplace=False) -> pandas.series:
+    def deduplicate(self, inplace=False) -> pd.Series:
         "return data without duplicates..."
         if inplace:
             self.data = self.data.drop_duplicates
