@@ -1,0 +1,41 @@
+name: Testing_inclusive
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  run-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version:
+          - "2.7"
+          - "3.6"
+          - "3.7"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "pypy-3.7"
+          - "pypy-3.8"
+          - "pypy-3.9"
+    name: inclusive-test
+    runs-on: ${{ matrix.os}}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-veresion }}
+
+      - name: Install dependencies
+        run: python -m pip install pytest .
+
+      - name: Run inclusive-test
+        run: pytest
