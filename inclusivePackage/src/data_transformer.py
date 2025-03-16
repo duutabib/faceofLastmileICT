@@ -1,7 +1,7 @@
 import numpy as np
 
 @pd.api.extensions.register_dataframe_accessor("transformer")
-class Datatransformer:
+class DataTransformer:
     def __init__(self, data_Object,  **kwargs):
         self.data_Object=data_Object 
 
