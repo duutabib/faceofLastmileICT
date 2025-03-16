@@ -1,5 +1,5 @@
 import pytest 
-from inclusive_pandasx import DataManager
+from data_manager import DataManager
 
 
 
