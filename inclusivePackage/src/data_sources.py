@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Datasource(Enum):
+class DataSource(Enum):
     def __init__(self):
         raspberry_source = 1
         other_soure = 2
