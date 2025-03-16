@@ -24,10 +24,10 @@ class DataAnalyzer:
     @staticmethod 
     def design_X(X):
         """
-            return a array of designed X for which is of the form 
+            return an array design X for which is of the form 
             f(x0, x1)=a* x0^2 + b* x0 + c* x0*x1 + d* x1 + e*x1^2 + f
             
-            for later: allow user specified design
+            for later: allow user specified design matrix
         """
         x0 = X[:, 0]  # static pressure
         x1 = X[:, 1]  # differential pressure 
