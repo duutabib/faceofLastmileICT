@@ -16,7 +16,9 @@ class DataManager(self):
        'DP_mV', 'Differential_Pa', 'Flow_lph', 'ideal flow ', 'cd',], **kwargs,):
         self.filename = filename
         self.usecols = usecols
-        self.data = pd.read_csv(self.filename, usecols=self.usecols, **kwargs)
+
+    def __call__(self) -> pd.DataFrame:
+        return self.data = pd.read_csv(self.filename, usecols=self.usecols, **kwargs)
 
     def get_col(self, col: list ) -> pd.Series:
         'Implement one or many cols of data...'
