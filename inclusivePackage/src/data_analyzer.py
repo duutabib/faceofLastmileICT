@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 
 from data_utils import compute_residuals
@@ -8,16 +9,16 @@ from sklearn.tree import DecisionTreeRegressor
 
 @pd.api.extensions.register_dataframe_accessor("analyzer")
 class DataAnalyzer:
-    def __init__(self, data_Object):
+    def __init__(self, data_Object: pd.DataFrame):
         self.data_Object = data_Object
   
     @staticmethod 
-    def make_set_of_metrics(model_score, model_mse, model_predictions) -> tuple:
+    def make_set_of_metrics(model_score: float, model_mse: float, model_predictions: NDArray) -> tuple:
         "returns an set of model metrics; including predictions"
         return (model_score, model_mse, model_predictions)
 
     @staticmethod
-    def compute_residuals(y_actual, y_predicted) -> NDArray:
+    def compute_residuals(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]) -> NDArray[np.float64]:
         """
             Return residuals for model predictions.
         """
@@ -25,8 +26,10 @@ class DataAnalyzer:
 
 
     @staticmethod 
-    def design_X(X) -> NDArray:
+    def design_X(X: NDArray[np.float64]) -> NDArray[np.float64]:
         """
+            Args:
+                X: shape (n, 2) or (number of instances, number of features) 
             return an array design X for which is of the form 
             f(x0, x1)=a* x0^2 + b* x0 + c* x0*x1 + d* x1 + e*x1^2 + f
             
@@ -38,13 +41,20 @@ class DataAnalyzer:
         return  X_design
 
 
-    def fit_data(self, X, y, **kwargs, random_state=42) -> dict:
-        """"
-        return a dictionary `fitDict` of multiple fits for data... including:
-        polynomial fit, decision trees, regresssion 
-        
-        model_values: takes an order pair, model_score, model_mse, and predicted model values
-         but poly 2D which takes the coeffs, model_mse, and model_predicted 
+    def fit_data(self, X: NDArray[np.float64], y: NDArray[np.float64], **kwargs, random_state: int = 42) -> dict:
+        """s
+            return a dictionary `fitDict` of multiple fits for data... including:
+            polynomial fit, decision trees, regresssion 
+            
+            model_values: takes an order pair, model_score, model_mse, and predicted model values
+            but poly 2D which takes the coeffs, model_mse, and model_predicted 
+
+            Args:
+            X: shape (n, 2) or (number of instances, number of features) 
+            y: (n, ) instances of response variable
+            **kwargs: keyword arguments
+            random_state: ran
+
         """
 
         # init, fit and predict linear regression  model
