@@ -1,12 +1,14 @@
+
 import numpy as np
+import pandas as pd
 
 @pd.api.extensions.register_dataframe_accessor("transformer")
 class DataTransformer:
-    def __init__(self, data_Object,  **kwargs):
+    def __init__(self, data_Object: pdDataFrame,  **kwargs):
         self.data_Object=data_Object 
 
     
-    def transform_variable(self, scaling_type='min-max', epsilon, axis=1, **kwargs):
+    def transform_variable(self, scaling_type: str = 'min-max', epsilon: float, axis: int = 1, **kwargs) -> pd.DataFrame:
         """
         return scaled versions of desired variables [typically scales to (0, 1)]
         """
@@ -33,7 +35,7 @@ class DataTransformer:
         return data_Object 
 
 
-    def is_data_transformed(self, scaling_type, tolerance):
+    def is_data_transformed(self, scaling_type: str, tolerance: float) -> bool:
         """
         Check if the dataset is appropriately scaled.
 
@@ -79,14 +81,14 @@ class DataTransformer:
         return is_scaled
 
 
-        def convert_to_flow_lph(self, col):
+        def convert_to_flow_lph(self, col: str) -> pd.Series:
             if not col:
                 return self.data['Flow_lph']/60
             else:
                 return self.data[col]/60 
 
 
-        def apply_lpm_rota_normalization(self, output_lpm, Tn, KCorrection):
+        def apply_lpm_rota_normalization(self, output_lpm: float, Tn: float, KCorrection: float) -> pd.DataFrame:
             data = self.data_Object
             return data.LPM_Rota *(data.Static_Pa + output_lpm)/ output_lpm*(Tn/(data.temp_mcu + KCorrection))
 
