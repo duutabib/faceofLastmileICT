@@ -15,8 +15,10 @@ class DataManager(self):
     # update: might be better to do the handling in pandas now...
     def __init__(self, filename: typing.,  usecols=['Static Pressure', 'LPM Rota', 'temp_mcu', 'Static_Pa', 'SP_mV',
        'DP_mV', 'Differential_Pa', 'Flow_lph', 'ideal flow ', 'cd',], **kwargs,):
-        self.filename = filename
-        self.usecols = usecols
+       if not filename:
+        raise ValueError("Cannot initialize Manager, filename not set or specified.")
+       self.filename = filename
+       self.usecols = usecols
 
     def __call__(self) -> pd.DataFrame:
         return self.data = pd.read_csv(self.filename, usecols=self.usecols, **kwargs)
