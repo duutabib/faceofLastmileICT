@@ -1,4 +1,6 @@
 import numpy as np
+from numpy.typing import NDArray
+
 from data_utils import compute_residuals
 from sklearn.linear_models import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -10,11 +12,12 @@ class DataAnalyzer:
         self.data_Object = data_Object
   
     @staticmethod 
-    def make_set_of_metrics(model_score, model_mse, model_predictions):
+    def make_set_of_metrics(model_score, model_mse, model_predictions) -> tuple:
+        "returns an set of model metrics; including predictions"
         return (model_score, model_mse, model_predictions)
 
     @staticmethod
-    def compute_residuals(y_actual, y_predicted):
+    def compute_residuals(y_actual, y_predicted) -> NDArray:
         """
             Return residuals for model predictions.
         """
@@ -22,7 +25,7 @@ class DataAnalyzer:
 
 
     @staticmethod 
-    def design_X(X):
+    def design_X(X) -> NDArray:
         """
             return an array design X for which is of the form 
             f(x0, x1)=a* x0^2 + b* x0 + c* x0*x1 + d* x1 + e*x1^2 + f
@@ -35,9 +38,9 @@ class DataAnalyzer:
         return  X_design
 
 
-    def fit_data(self, X, y, **kwargs, random_state=42):
+    def fit_data(self, X, y, **kwargs, random_state=42) -> dict:
         """"
-        return fitDict of multiple fits for data... including:
+        return a dictionary `fitDict` of multiple fits for data... including:
         polynomial fit, decision trees, regresssion 
         
         model_values: takes an order pair, model_score, model_mse, and predicted model values
