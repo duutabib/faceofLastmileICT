@@ -4,14 +4,23 @@ import matplotlib.gridspec as gridspec
 
 @pd.api.extensions.register_dataframe_accessor("visualizer")
 class DataVisualizer:
-    def __init__(self, fitDict, **kwargs,  ):
+    def __init__(self, fitDict: dict, **kwargs,  ):
         self.fitDict = fitDict
 
-    def apply_model_visualizer(self, color='blue', figsize=(20, 20), all, **kwargs):
+    def apply_model_visualizer(self, color: str ='blue', figsize: tuple = (20, 20), all: bool, **kwargs) -> :
+            # Implementation: how to handle compare for specific type of models different 
+            # need to think a bit about the design... 
+            # create helper functions for each visualization of a model compose for the compare
+            # that might work...
 
             """
-            outputs a plot of all model fits for data, with the default all flag. Working on
-            additional flags to allow for flexibilty in comparison. 
+                returns a plot of all model fits for data, with the default all flag. Working on
+                additional flags to allow for flexibilty in comparison. 
+                Args:
+                    color: string; set color for labels
+                    figsize: tuple; set size for the fig
+                    all: bool; rendering comparison for all models 
+                    **kwargs:
             """
             fitDict = self.fitDict
 
@@ -66,21 +75,21 @@ class DataVisualizer:
 # takes objects from the  visualizer, resize and saves it one of two formats {png, pdf}.
 @pd.api.extensions.register_dataframe_accessor("ImageHandler")
 class ImageHandler:
-    def __init__(self, img, name):
+    def __init__(self, img, name) -> None:
         self.img = img 
         self.name = name
 
     # resize image
-    def _resize_image(self, width, height):
+    def _resize_image(self, width, height) -> None:
         self.img = plt.gca()
         self.img.set_size_inches(width, height)
 
     # save image as pdf
-    def save_pdf(self):
+    def save_pdf(self) -> None:
         self.img.savefig(f"{self.name}",
                         format="pdf", bbox_inches="tight")
 
     # save image as png 
-    def save_png(self):
+    def save_png(self) - None:
         self.img.savefig(f"{self.name}", 
                         format="png", bbox_inches="tight")
