@@ -12,6 +12,7 @@ class DataManager(self):
     # I'm thinking of implementing usecols differently, what do you think? for example defining as a constant,
     # embedded in an assert statement
     # add handle invoking with missing filenames...
+    # update: might be better to do the handling in pandas now...
     def __init__(self, filename: typing.,  usecols=['Static Pressure', 'LPM Rota', 'temp_mcu', 'Static_Pa', 'SP_mV',
        'DP_mV', 'Differential_Pa', 'Flow_lph', 'ideal flow ', 'cd',], **kwargs,):
         self.filename = filename
