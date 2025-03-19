@@ -16,8 +16,7 @@ from typing import Union, Any, Optional, List
 # remove read functionality from data manager class...
 
 
-@pd.api.extensions.register_dataframe_accessor("manager")
-class DataManager:
+class DataWriter:
     # I'm thinking of implementing usecols differently, what do you think? for example defining as a constant,
     # embedded in an assert statement
     # add handle invoking with missing filenames...
