@@ -17,22 +17,18 @@ from typing import path, Any, Optional
 
 
 class DataReader:
-    # I'm thinking of implementing usecols differently, what do you think? for example defining as a constant,
-    # embedded in an assert statement
-    # add handle invoking with missing filenames...
-    # update: might be better to do the handling in pandas now...
-    DEFAULT_USECOLS = [
-        'Static Pressure', 
-        'LPM Rota', 
-        'temp_mcu', 
-        'Static_Pa', 
-        'SP_mV', 
-        'DP_mV', 
-        'Differential_Pa', 
-        'Flow_lph', 
-        'ideal flow ', 
-        'cd',
-    ]
+        DEFAULT_USECOLS = [
+            'Static Pressure', 
+            'LPM Rota', 
+            'temp_mcu', 
+            'Static_Pa', 
+            'SP_mV', 
+            'DP_mV', 
+            'Differential_Pa', 
+            'Flow_lph', 
+            'ideal flow ', 
+            'cd',
+        ]
         
     def read_csv(self, filename: Optional[str],  usecols: List[str], **kwargs,):
         """ Create a new Data Manager instance"""
