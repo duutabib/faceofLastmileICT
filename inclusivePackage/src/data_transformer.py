@@ -1,40 +1,33 @@
 
 import numpy as np
 import pandas as pd
+from typing import Optional, Any, List, 
 
 @pd.api.extensions.register_dataframe_accessor("transformer")
 class DataTransformer:
-    def __init__(self, data_Object: pdDataFrame,  **kwargs):
-        self.data_Object=data_Object 
+    def __init__(self, pandas_obj: pd.DataFrame,  **kwargs):
+        self._data= pandas_obj
 
-    
     def transform_variable(self, scaling_type: str = 'min-max', epsilon: float, axis: int = 1, **kwargs) -> pd.DataFrame:
         """
         return scaled versions of desired variables [typically scales to (0, 1)]
         """
-        for col in self.data_Object:
-            col_data = self.data_Object[col]
+        df = self._data.copy()
+        for col in df:
+            df[col] = self._scale(df[col], scaling_type, epsilon)
+        return self._data
 
-            match scaling_type:
-                case 'min-max' | 'normalization':
-                    max_value = col_data.max()
-                    min_value = col_data.min()
-                    col_transformed = (col_data - min_value)/ (max_value - min_value)
+    def _scale(self, col_data: pd.Series, scaling_type: str, epsilon:float = 1e-10) -> pd.Series:
+        if scaling_type in ('min-max' | 'normalization'):
+            max_value, min_value  = col_data.max(), col_data.min()
+            return (col_data - min_value)/ (max_value - min_value + epsilon)
                 
-                case 'standardized':
-                    mean = col_data.mean()
-                    std = col_data.std() + epsilon 
-                    col_transformed = (col_data - mean)/std
-                
-                case _:
-                    max_value = col_data.max()
-                    min_value = col_data.min()
-                    col_transformed = (col_data - min_value)/ (max_value - min_value)
-
-            self.data_Object[col] = col_transformed  
-        return data_Object 
-
-
+        elif scaling_type == 'standardized':
+           mean, std = col_data.mean(), col_data.std() + epsilon 
+           return  (col_data - mean)/std
+        
+       raise ValueError(f"Unknown scaling_type:{scaling_type}") 
+    
     def is_data_transformed(self, scaling_type: str, tolerance: float) -> bool:
         """
         Check if the dataset is appropriately scaled.
@@ -48,48 +41,39 @@ class DataTransformer:
         - bool, indicating whether the data is transformed 
         """
     
-        for column in self.data.columns:
-            column_data = self.data[column]
+        for col in self._data.columns:
+            col_data = self._data[col]
             
-            match scaling_type:
-                case 'standardized':
-                    # Check mean and std for standardized data (mean ≈ 0, std ≈ 1)
-                    mean = column_data.mean()
-                    std_dev = column_data.std()
-                    is_scaled = (abs(mean) < tolerance) and (abs(std_dev - 1) < tolerance)
-                
-                    # need to handle what happens if is_scaled is false 
+            if scaling_type == 'standardized':
+                # Check mean and std for standardized data (mean ≈ 0, std ≈ 1)
+                mean, std = col_data.mean(), col_data.std()
+                if not (abs(mean) < tolerance) and (abs(std_dev - 1) < tolerance):
+                    return False
 
-                case 'normalized':
-                    # Check min and max for normalized data (min ≈ 0, max ≈ 1)
-                    min_val = column_data.min()
-                    max_val = column_data.max()
-                    is_scaled = (abs(min_val) < tolerance) and (abs(max_val - 1) < tolerance)
-                
-                    # need to handle what happens if is_scaled is false 
-            
-                case 'min-max':
-                    # Check min and max for min-max normalized data (min ≈ 0 , max ≈ 1 )
-                    min_val = column_data.min()
-                    max_val = column_data.max()
-                    is_scaled = (abs(min_val) < tolerance ) and (abs(max_val - 1) < tolerance )
-                    # need to handle what happens if is_scaled is false 
+            elif scaling_type in ('normalized', 'min-max'):
+                # Check min and max for normalized data (min ≈ 0, max ≈ 1)
+                min_val, max_val = column_data.min(), column_data.max()
+                if not (abs(min_val) < tolerance) and (abs(max_val - 1) < tolerance):
+                    return False
+            else: 
+                raise ValueError("Invalid scaling_type. Use 'standardized' or 'normalized', 'min-max'.")
+        return True
 
-                case _:
-                    raise ValueError("Invalid scaling_type. Use 'standardized' or 'normalized'.")
+
+class FlowTransformer:
+    def __init__(self, df: pd.DataFrame):
+        self._df = df
+
+    def convert_to_flow_lph(self, col: str = 'Flow_lph') -> pd.Series:
+        if col not in self._df:
+            raise KeyError(f"Column {col} not found.")
+        return self._data[col]/60 
+
+    def apply_lpm_rota_normalization(self, output_lpm: float, Tn: float, KCorrection: float) -> pd.DataFrame:
+        required_cols = ["LPM_Rota", 'Static_Pa', 'temp_mcu']
+        if not all(col in self.df for col in required_cols):
+            raise KeyError(f"Missing required columns {requied_cols}")
+        return self._data.LPM_Rota *(self._data.Static_Pa + output_lpm)/ output_lpm*(Tn/(self._data.temp_mcu + KCorrection))
+
+
     
-        return is_scaled
-
-
-        def convert_to_flow_lph(self, col: str) -> pd.Series:
-            if not col:
-                return self.data['Flow_lph']/60
-            else:
-                return self.data[col]/60 
-
-
-        def apply_lpm_rota_normalization(self, output_lpm: float, Tn: float, KCorrection: float) -> pd.DataFrame:
-            data = self.data_Object
-            return data.LPM_Rota *(data.Static_Pa + output_lpm)/ output_lpm*(Tn/(data.temp_mcu + KCorrection))
-
-
