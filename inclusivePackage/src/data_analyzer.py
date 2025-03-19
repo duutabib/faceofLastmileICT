@@ -75,7 +75,7 @@ class DataAnalyzer:
         dTree_y  = dTree_model.predict(X)
 
         dTree_values = make_set_of_metrics(dTree_score, dTree_mse, dTree_y)
-        
+       
         
         # designX, fit and predict 2 order polynomial 
         X_design = design_X(X)
