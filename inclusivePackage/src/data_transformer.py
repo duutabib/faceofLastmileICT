@@ -67,13 +67,13 @@ class FlowTransformer:
     def convert_to_flow_lph(self, col: str = 'Flow_lph') -> pd.Series:
         if col not in self._df:
             raise KeyError(f"Column {col} not found.")
-        return self._data[col]/60 
+        return self._df[col]/60 
 
     def apply_lpm_rota_normalization(self, output_lpm: float, Tn: float, KCorrection: float) -> pd.DataFrame:
         required_cols = ["LPM_Rota", 'Static_Pa', 'temp_mcu']
         if not all(col in self.df for col in required_cols):
             raise KeyError(f"Missing required columns {requied_cols}")
-        return self._data.LPM_Rota *(self._data.Static_Pa + output_lpm)/ output_lpm*(Tn/(self._data.temp_mcu + KCorrection))
+    ``   return self._df.LPM_Rota *(self._df.Static_Pa + output_lpm)/ output_lpm*(Tn/(self._df.temp_mcu + KCorrection))
 
 
     
