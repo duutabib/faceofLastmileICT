@@ -73,7 +73,7 @@ class FlowTransformer:
         required_cols = ["LPM_Rota", 'Static_Pa', 'temp_mcu']
         if not all(col in self.df for col in required_cols):
             raise KeyError(f"Missing required columns {requied_cols}")
-    ``   return self._df.LPM_Rota *(self._df.Static_Pa + output_lpm)/ output_lpm*(Tn/(self._df.temp_mcu + KCorrection))
+        return self._df.LPM_Rota *(self._df.Static_Pa + output_lpm)/ output_lpm*(Tn/(self._df.temp_mcu + KCorrection))
 
 
     
