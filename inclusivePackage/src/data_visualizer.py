@@ -1,13 +1,32 @@
+from typing import Optional, Union
+
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 
-@pd.api.extensions.register_dataframe_accessor("visualizer")
 class DataVisualizer:
-    def __init__(self, fitDict: dict, **kwargs,  ):
-        self.fitDict = fitDict
+    def __init__(self,  fit_dict: dict = None, **kwargs,  ):
+        self._fit_dict = fit_dict
 
-    def apply_model_visualizer(self, color: str ='blue', figsize: tuple = (20, 20), all: bool, **kwargs) -> :
+    def _get_model_data(self, model_key:str) -> tuple[float, float, pd.Series]:
+        try:
+            score, mse, y_pred = self._fit_dict[model_key]
+            return score, mse, y_pred
+        except (KeyError, TypeError):
+            raise ValueError(f"Invalid fit_dict format for {model_key}")
+            
+
+    def _plot_model(self,ax, y_actual, y_pred, score, title: str, color:str):
+        ax.scatter(y_actual, y_pred, color=color)
+        ax.axline((0, 0), slope=1, linestyle'--', color='red', linewidth=2)
+        ax.set_title(f"{title} (Score ={score:.3f})", fontsize)
+
+
+    # maybe implement helper for plot asthetics including (axis, labels)
+    def _plot_decorator(labels, ax, bounds, ):
+        ...
+
+    def apply_model_visualizer(self, models, color: str ='blue', figsize: tuple = (20, 20), all: bool, **kwargs) -> Optional[list]:
             # Implementation: how to handle compare for specific type of models different 
             # need to think a bit about the design... 
             # create helper functions for each visualization of a model compose for the compare
@@ -22,26 +41,21 @@ class DataVisualizer:
                     all: bool; rendering comparison for all models 
                     **kwargs:
             """
-            fitDict = self.fitDict
 
-            p=plt.rcParams
-            p["figure.figsize"] = figsize
-            p["font.sans-serif"] = ["Roboto Condensed"]
-            p["font.weight"] = "light"
-            p["ytick.minor.visible"] = "True"
-            p["xtick.minor.visible"] = "True"
-
+            models = ['lm_model', 'poly_model', 'dTree_model'] if all else []
+            models  = models or self._fit_dict.keys() - {y_actual}
+                        
             # define data (fix outputs for model_mse)
-            y_actual = fitDict['y_actual']
-            lm_score, y_lm =  fitDict['lm_model']
-            poly_mse, y_poly =fitDict['poly_model'][1] 
-            dTree_score, y_dTree = fitDict['dTree_model'][1]
+            _, _, y_actual = _get_model_data(model='y_actual')
+            lm_score, lm_mse, ypred_lm = _get_model_data(model='lm_model')
+            _, poly_mse, poly_ypred = _get_model_data(model='poly_model')
+            dTree_score, dTree_mse,  ypred_dTree = _get_model_data(model='dTree_model')
             
 
-            fig0 = plt.figure(constrainted_layout=True)
-            nrows, ncols= 1, 3
+            fig0 = plt.figure(figsize= figsize, constrained_layout=True)
+            ncols= 1, len(models)
             w1, w2 = 20, 1
-            gspec=gridspec.GridSpec(ncols=ncols, nrows=nrows, figure=fig0, width_ratios=[w1, w2]))
+            gspec=gridspec.GridSpec(ncols=ncols, nrows=1, figure=fig0, width_ratios=[w1, w2]))
 
             # 
             ax = plt.subplot(gspec[0, 0], aspect=1)
@@ -73,23 +87,17 @@ class DataVisualizer:
 
 
 # takes objects from the  visualizer, resize and saves it one of two formats {png, pdf}.
-@pd.api.extensions.register_dataframe_accessor("ImageHandler")
 class ImageHandler:
-    def __init__(self, img, name) -> None:
-        self.img = img 
+    def __init__(self, fig: plt.Figure, name: str) -> None:
+        if not isinstance(figure, plt.Figure):
+            raise TypeError("figure must be a matplotlib.pyplot.Figure")
+        self._fig = fig
         self.name = name
 
     # resize image
-    def _resize_image(self, width, height) -> None:
-        self.img = plt.gca()
-        self.img.set_size_inches(width, height)
+    def _resize_image(self, width: int, height:int) -> None:
+        self._fig.set_size_inches(width, height)
 
     # save image as pdf
-    def save_pdf(self) -> None:
-        self.img.savefig(f"{self.name}",
-                        format="pdf", bbox_inches="tight")
-
-    # save image as png 
-    def save_png(self) - None:
-        self.img.savefig(f"{self.name}", 
-                        format="png", bbox_inches="tight")
+    def save(self, format: str ='png') -> None:
+        self._fig.savefig(self.name, format=format, bbox_inches='tight')
