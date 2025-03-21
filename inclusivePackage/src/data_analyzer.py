@@ -13,16 +13,28 @@ class DataAnalyzer:
         self.data_Object = data_Object
   
     @staticmethod 
-    def make_set_of_metrics(model_score: float, model_mse: float, model_predictions: NDArray) -> tuple:
+    def add_model_stats_to_set(model_score: float, model_mse: float, model_predictions: NDArray) -> tuple:
         "returns an set of model metrics; including predictions"
         return (model_score, model_mse, model_predictions)
+    
+    
+    # consider rewriting model init...
+    # to make for easier call of models and generalization of methods
+    def _compute_model_stats(model:str, ) -> tuple:
+        
+        mse
+        return (model.score, mse, predictions)
+        ...
+
+    def _compute_residuals(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]):
+        return (y_actual - y_predicted)
 
     @staticmethod
-    def compute_residuals(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]) -> NDArray[np.float64]:
+    def compute_mse(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]) -> NDArray[np.float64]:
         """
-            Return residuals for model predictions.
+            Return mse, residuals  for model predictions.
         """
-        return np.mean((y_acutal - y_predicted)**2)
+        return _compute_residuals(y_actual, y_predictions)**2
 
 
     @staticmethod 
@@ -58,6 +70,8 @@ class DataAnalyzer:
         """
 
         # init, fit and predict linear regression  model
+        # define helper to compute model stats... 
+        # call to and add metrics as
         lm_model = LinearRegression(random_state=42)
         
         lm_score = lm_model.score(X, y)
@@ -84,9 +98,9 @@ class DataAnalyzer:
         poly_y = X_design @ coef
         poly_mse = compute_residuals(y - poly_y)
 
-        poly_values = make_set_of_metrics(coef, poly_mse, poly_y)
+        poly_values = make_set_of_metrics(None, poly_mse, poly_y)
         
         # set dict values        
-        return { 'y_actual': y , 'lm_model':lm_values, 'dTree_model':dTree_values, 'poly_model':poly_values} 
+        return { 'y_actual': (None, None, y) , 'lm_model':lm_values, 'dTree_model':dTree_values, 'poly_model':poly_values} 
 
 
