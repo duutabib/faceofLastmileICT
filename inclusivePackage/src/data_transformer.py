@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from typing import Optional, Any, List, 
 
+# consider making DataTransformer more general, so I can inherit Flow transformer.
+#
 @pd.api.extensions.register_dataframe_accessor("transformer")
 class DataTransformer:
     def __init__(self, pandas_obj: pd.DataFrame,  **kwargs):
@@ -71,7 +73,7 @@ class FlowTransformer:
 
     def apply_lpm_rota_normalization(self, output_lpm: float, Tn: float, KCorrection: float) -> pd.DataFrame:
         required_cols = ["LPM_Rota", 'Static_Pa', 'temp_mcu']
-        if not all(col in self.df for col in required_cols):
+        if not all(col in self._df for col in required_cols):
             raise KeyError(f"Missing required columns {requied_cols}")
         return self._df.LPM_Rota *(self._df.Static_Pa + output_lpm)/ output_lpm*(Tn/(self._df.temp_mcu + KCorrection))
 
