@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 from typing import Optional, Any, List
@@ -6,7 +5,7 @@ from typing import Optional, Any, List
 # consider making DataTransformer more general, so I can inherit Flow transformer.
 #
 @pd.api.extensions.register_dataframe_accessor("transformer")
-class DataTransformer:
+class Transformer:
     def __init__(self, pandas_obj: pd.DataFrame,  **kwargs):
         self._data= pandas_obj
 
