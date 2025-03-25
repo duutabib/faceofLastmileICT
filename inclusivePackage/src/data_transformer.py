@@ -17,7 +17,7 @@ class DataTransformer:
         df = self._data.copy()
         for col in df:
             df[col] = self._scale(df[col], scaling_type, epsilon)
-        return self._data
+        return df
 
     def _scale(self, col_data: pd.Series, scaling_type: str, epsilon:float = 1e-10) -> pd.Series:
         if scaling_type in ('min-max' | 'normalization'):
