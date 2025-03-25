@@ -106,5 +106,3 @@ class DataAnalyzer:
             fit_dict['poly_model'] = self._make_fit_result(None, poly_mse, poly_y)
 
         return fit_dict
-
-
