@@ -1,10 +1,8 @@
 import os
 import pickle
-import typing
-
 import pandas as pd
 
-from typing import Union, Any, Optional, List
+from typing import Union,  List
 
 # I have two design choices to make, either I remove the Pandas decorator...
 # which expects a pandas object 
@@ -26,7 +24,7 @@ class DataManager:
         """ Create a new Data Manager instance"""
         self._data  = pandas_obj
     
-    def get_col(self, col: Union[str List[str]] ) -> Union[pd.Series, pd.DataFrame]:
+    def get_col(self, col: Union[str, List[str]] ) -> Union[pd.Series, pd.DataFrame]:
         'Implement one or many cols of data...'
         if isinstance(col, str):
             col = [col]
@@ -36,9 +34,9 @@ class DataManager:
 
     def get_row(self, row: Union[str, int]) -> Union[pd.Series, pd.DataFrame]:
         'Implement for one or many row...'
-        if isinstance(row, [str, int]):
+        if isinstance(row, Union[str, int]):
             row = [row]
-        if not all(item in self.data.index for item in row):
+        if not all(item in self._data.index for item in row):
             raise KeyError(f"Rows {row} not in data rows")
         return self._data.loc[row, :]
     
@@ -59,4 +57,18 @@ class DataManager:
             return None
         return self._data.drop_duplicates()
 
-      
+    def save_csv(self, filename: Union[str, os.PathLike]) -> None:
+        """save data in csv format..."""
+        with  open(filename, "wb") as canvas:
+            self._data.to_csv(canvas)
+
+    def save_excel(self, filename: Union[str, os.PathLike]) -> None:
+        """save data in excel format"""
+        with open(filename, "wb") as canvas:
+            self._data.to_excel(canvas)
+
+    def write_curr_best_data_to_file(self, filename: Union[str, os.PathLike] = "curr_best.pickle") -> none:
+        """write best version of data in monitoring utility"""
+        with open(filename, "wb") as canvas:
+            pickle.dump(self._data, canvas,  protocol=pickle.HIGHEST_PROTOCOL)
+     
