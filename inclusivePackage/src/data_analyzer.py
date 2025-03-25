@@ -2,105 +2,109 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from data_utils import compute_residuals
 from sklearn.linear_models import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 
 
 @pd.api.extensions.register_dataframe_accessor("analyzer")
 class DataAnalyzer:
-    def __init__(self, data_Object: pd.DataFrame):
-        self.data_Object = data_Object
+    def __init__(self, pandas_obj: pd.DataFrame):
+        self._pandas_obj = pandas_obj
   
-    @staticmethod 
-    def add_model_stats_to_set(model_score: float, model_mse: float, model_predictions: NDArray) -> tuple:
-        "returns an set of model metrics; including predictions"
-        return (model_score, model_mse, model_predictions)
-    
-    
-    # consider rewriting model init...
-    # to make for easier call of models and generalization of methods
-    def _compute_model_stats(model:str, ) -> tuple:
-        
-        mse
-        return (model.score, mse, predictions)
-        ...
+    class FitResult:
+        def __init__(self, score:float, mse:float, predictions:NDArray):
+            self.score = score
+            self.mse = mse
+            self.predictions = predictions
 
-    def _compute_residuals(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]):
-        return (y_actual - y_predicted)
+    def _make_fit_result(self, score: float, mse: float, predictions: NDArray) -> tuple:
+        "returns an set of model metrics; including predictions"
+        return self.FitResult(score, mse, predictions)
+    
+
+    def _fit_model(self, model, X: NDArray, y: NDArray) -> 'FitResult':
+        """ Compute model score, mean squure error and predictions
+
+            Args:
+                model_obj: model object, initialized model object 
+                X (NDArray): (n, 2) n instances of 2 features from 
+                y (NDArray): (n,) instances of dependent variable 
+            
+            Returns:
+                an ordered tuple, score, mse, y_pred
+         """
+        model.fit(X, y)
+        score = model.score(X, y) 
+        y_pred = model.predict(y)
+        mse = self.compute_mse(y, y_pred) 
+        return self.FitResult(score, mse, y_pred)
 
     @staticmethod
-    def compute_mse(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]) -> NDArray[np.float64]:
-        """
+    def compute_mse(y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]) -> float:
+        """Compute mean squared error between actual and predicted values.
             Return mse, residuals  for model predictions.
         """
-        return _compute_residuals(y_actual, y_predictions)**2
+        residuals = y_actual - y_predicted
+        return np.mean(residuals ** 2)
 
 
     @staticmethod 
-    def design_X(X: NDArray[np.float64]) -> NDArray[np.float64]:
-        """
+    def x_design(X: NDArray, terms: list[str]) -> NDArray:
+        """ Creates design matrix X based on terms.
             Args:
-                X: shape (n, 2) or (number of instances, number of features) 
-            return an array design X for which is of the form 
-            f(x0, x1)=a* x0^2 + b* x0 + c* x0*x1 + d* x1 + e*x1^2 + f
-            
-            for later: allow user specified design matrix
+                X (NDArray[n, 2]): shape (n, 2) or (number of instances, number of features) 
+                terms List[str] : form of the function. Default is f(x0, x1)=a* x0^2 + b* x0 + c* x0*x1 + d* x1 + e*x1^2 + f
+            Returns:
+                an array design X for which is of the form 
         """
+        if X.shape[1] !=2:
+            raise ValueError("X must have exactly 2 features")
         x0 = X[:, 0]  # static pressure
         x1 = X[:, 1]  # differential pressure 
-        X_design = np.vstack((np.ones_like(x0), x0, x1, x0**2, x0*x1, x1**2)).T
-        return  X_design
+        default_terms= ['1', 'x0', 'x1', 'x0^2', 'x0*x1', 'x1^2']
+        terms = terms or default_terms
+        design = [np.ones_like(x0) if t == '1' else eval(t, {'x0': x0, 'x1': x1}) for t in terms]
+        return  np.vstack(design).T
 
 
-    def fit_data(self, X: NDArray[np.float64], y: NDArray[np.float64], **kwargs, random_state: int = 42) -> dict:
-        """s
-            return a dictionary `fitDict` of multiple fits for data... including:
-            polynomial fit, decision trees, regresssion 
+
+
+    def fit_data(self, x_cols: list[str], y_col: str, models: dict[str]= None, random_state: int = 42) -> dict:
+        """ Fit multiple models to data.
+            Args: 
+                x_cols (list[str]) : list of cols of x.
+                y_col: (n, ) instances of response variable
+                models: dict of models 
+                random_state (int): integer to set the random state of model for reproducibility.d
+
+            Returns:
+                return a dictionary `fitDict` of multiple fits for data... including:
+                polynomial fit, decision trees, regresssion 
             
-            model_values: takes an order pair, model_score, model_mse, and predicted model values
-            but poly 2D which takes the coeffs, model_mse, and model_predicted 
-
-            Args:
-            X: shape (n, 2) or (number of instances, number of features) 
-            y: (n, ) instances of response variable
-            **kwargs: keyword arguments
-            random_state: ran
-
         """
+        default_models = {
+            'lm_model': LinearRegression(random_state=random_state),
+            'dTree_model': DecisionTreeRegressor(random_state=random_state)
+        }
+
+        X = self._pandas_obj[x_cols].to_numpy()
+        y = self._pandas_obj[y_col].to_numpy()
 
         # init, fit and predict linear regression  model
         # define helper to compute model stats... 
         # call to and add metrics as
-        lm_model = LinearRegression(random_state=42)
-        
-        lm_score = lm_model.score(X, y)
-        lm_y  = lm_model.predict(X)
-        lm_mse = compute_residuals(y - lm_y)
 
-        lm_values = make_set_of_metrics(lm_score, lm_mse, lm_y)
-        
-        
-        # init, fit and predict decision tree
-        dTree_model = DecisionTreeRegressor(random_state=42)
-        
-        dTree_score = dTree_model.score(X, y)
-        dTree_mse = compute_residuals(y - dTree_y)
-        dTree_y  = dTree_model.predict(X)
+        models = models or default_models 
+        fit_dict = {'y_actual': self._make_fit_result(None, None, y)}
+        for name, model in models.items():
+            fit_dict[name] = self._fit_model(model, X, y)
+        if 'poly_model' not in models:
+            x_design = self.x_design(X, terms=None)
+            coef, *_= np.linalg.lstsq(x_design, y)
+            y_pred = x_design @ coef
+            poly_mse = self.compute_mse(y, y_pred)
+            fit_dict['poly_model'] = self._make_fit_result(None, poly_mse, poly_y)
 
-        dTree_values = make_set_of_metrics(dTree_score, dTree_mse, dTree_y)
-       
-        
-        # designX, fit and predict 2 order polynomial 
-        X_design = design_X(X)
-        
-        coef, _, _, _= np.linalg.lstsq(X_design, y)
-        poly_y = X_design @ coef
-        poly_mse = compute_residuals(y - poly_y)
-
-        poly_values = make_set_of_metrics(None, poly_mse, poly_y)
-        
-        # set dict values        
-        return { 'y_actual': (None, None, y) , 'lm_model':lm_values, 'dTree_model':dTree_values, 'poly_model':poly_values} 
+        return fit_dict
 
 
