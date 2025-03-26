@@ -7,7 +7,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 
 @pd.api.extensions.register_dataframe_accessor("analyzer")
-class DataAnalyzer:
+class Analyzer:
     def __init__(self, pandas_obj: pd.DataFrame):
         self._pandas_obj = pandas_obj
   
@@ -106,3 +106,4 @@ class DataAnalyzer:
             fit_dict['poly_model'] = self._make_fit_result(None, poly_mse, poly_y)
 
         return fit_dict
+
