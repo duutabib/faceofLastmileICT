@@ -2,10 +2,10 @@ import os
 import pickle
 import pandas as pd
 
-from typing import Union,  List
+from typing import Union, List
 
 # I have two design choices to make, either I remove the Pandas decorator...
-# which expects a pandas object 
+# which expects a pandas object
 # or keep it and abstract the reading of the data from the manager, so that the manager
 # expects a pandas object and not a filename name
 # so I could have a separate class that depends on that inherits from the pandas read data class
@@ -16,39 +16,37 @@ from typing import Union,  List
 
 @pd.api.extensions.register_dataframe_accessor("manager")
 class DataManager:
-    # I'm thinking of implementing usecols differently, what do you think? for example defining as a constant,
-    # embedded in an assert statement
-    # add handle invoking with missing filenames...
-    # update: might be better to do the handling in pandas now...
+    """Class representing DataManager"""
+
     def __init__(self, pandas_obj):
-        """ Create a new Data Manager instance"""
-        self._data  = pandas_obj
-    
-    def get_col(self, col: Union[str, List[str]] ) -> Union[pd.Series, pd.DataFrame]:
-        'Implement one or many cols of data...'
+        """Create a new Data Manager instance"""
+        self._data = pandas_obj
+
+    def get_col(self, col: Union[str, List[str]]) -> Union[pd.Series, pd.DataFrame]:
+        "Implement one or many cols of data..."
         if isinstance(col, str):
             col = [col]
         if not all(item in self._data.columns.values for item in col):
             raise KeyError(f"Columns {col} not in data columns.")
-        return self._data.loc[:, col] 
+        return self._data.loc[:, col]
 
     def get_row(self, row: Union[str, int]) -> Union[pd.Series, pd.DataFrame]:
-        'Implement for one or many row...'
+        "Implement for one or many row..."
         if isinstance(row, Union[str, int]):
             row = [row]
         if not all(item in self._data.index for item in row):
             raise KeyError(f"Rows {row} not in data rows")
         return self._data.loc[row, :]
-    
+
     def count_nrows(self) -> int:
         """
-            returns the number of rows for data 
+        returns the number of rows for data
         """
         return len(self._data.index)
 
     def count_ncols(self) -> int:
         "returns the number of cols for data"
-        return len(self._data.columns)       
+        return len(self._data.columns)
 
     def deduplicate(self, inplace=False) -> pd.Series:
         "return data without duplicates..."
@@ -59,7 +57,7 @@ class DataManager:
 
     def save_csv(self, filename: Union[str, os.PathLike]) -> None:
         """save data in csv format..."""
-        with  open(filename, "wb") as canvas:
+        with open(filename, "wb") as canvas:
             self._data.to_csv(canvas)
 
     def save_excel(self, filename: Union[str, os.PathLike]) -> None:
@@ -67,8 +65,9 @@ class DataManager:
         with open(filename, "wb") as canvas:
             self._data.to_excel(canvas)
 
-    def write_curr_best_data_to_file(self, filename: Union[str, os.PathLike] = "curr_best.pickle") -> none:
+    def write_curr_best_data_to_file(
+        self, filename: Union[str, os.PathLike] = "curr_best.pickle"
+    ) -> None:
         """write best version of data in monitoring utility"""
         with open(filename, "wb") as canvas:
-            pickle.dump(self._data, canvas,  protocol=pickle.HIGHEST_PROTOCOL)
-     
+            pickle.dump(self._data, canvas, protocol=pickle.HIGHEST_PROTOCOL)
