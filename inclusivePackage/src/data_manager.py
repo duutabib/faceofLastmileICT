@@ -1,18 +1,9 @@
 import os
 import pickle
+
+from typing import List, Union
+
 import pandas as pd
-
-from typing import Union, List
-
-# I have two design choices to make, either I remove the Pandas decorator...
-# which expects a pandas object
-# or keep it and abstract the reading of the data from the manager, so that the manager
-# expects a pandas object and not a filename name
-# so I could have a separate class that depends on that inherits from the pandas read data class
-# since the ddataManager depends on pandas functionality it might make sense to do the former...
-# otherwise, I could create my own removing the dependence on pandas, but this might be too costly
-# remove read functionality from data manager class...
-
 
 @pd.api.extensions.register_dataframe_accessor("manager")
 class DataManager:
