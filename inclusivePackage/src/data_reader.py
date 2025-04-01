@@ -2,22 +2,14 @@ import os
 import pickle
 import typing
 
+from typing import Optional
 import pandas as pd
 
-from typing import path, Any, Optional
-
-# I have two design choices to make, either I remove the Pandas decorator...
-# which expects a pandas object 
-# or keep it and abstract the reading of the data from the manager, so that the manager
-# expects a pandas object and not a filename name
-# so I could have a separate class that depends on that inherits from the pandas read data class
-# since the ddataManager depends on pandas functionality it might make sense to do the former...
-# otherwise, I could create my own removing the dependence on pandas, but this might be too costly
-# remove read functionality from data manager class...
 
 
-class DataReader:
-        DEFAULT_USECOLS = [
+class Reader:
+    """Class representing the data reader... """
+    default_cols = [
             'Static Pressure', 
             'LPM Rota', 
             'temp_mcu', 
@@ -28,16 +20,21 @@ class DataReader:
             'Flow_lph', 
             'ideal flow ', 
             'cd',
-        ]
+    ]
+
+    def __init__(self, filename: Optional[str],  usecols: list[str], **kwargs):
+        self.filename = filename
+        self.usecols = usecols
+        self.kwargs = kwargs
         
-    def read_csv(self, filename: Optional[str],  usecols: List[str], **kwargs,):
-        """ Create a new Data Manager instance"""
-        if not usecols:
-            usecols = DEFAULT_USECOLS
-        if not filename:
+    def read_csv(self):
+        """Reads CSV and returns DataFrame..."""
+        if not self.usecols:
+            self.usecols = Reader.default_cols
+        if not self.filename:
             raise ValueError("Cannot initialize DataManager, filename not set or specified.")
-        if not os.path.exists(filename):
-            raise FileNotFoundError(f"File {filename} does not exist.")
-        return  pd.read_csv(self.filename, usecols=usecols, **kwargs)
+        if not os.path.exists(self.filename):
+            raise FileNotFoundError(f"File {self.filename} does not exist.")
+        return  pd.read_csv(self.filename, usecols=self.usecols, **self.kwargs)
 
        
