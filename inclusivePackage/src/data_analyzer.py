@@ -18,7 +18,7 @@ class Analyzer:
     class FitResult:
         """Class representing the FitResult
             This is a wrapper function that collects the results 
-            for model fitting.  
+            for model fitting.      
         """
         def __init__(self, score: float, mse: float, predictions: NDArray):
             self.score = score
@@ -97,7 +97,7 @@ class Analyzer:
 
         """
         default_models = {
-            "lm_model": LinearRegression(random_state=random_state),
+            "lm_model": LinearRegression(),
             "dTree_model": DecisionTreeRegressor(random_state=random_state),
         }
 
