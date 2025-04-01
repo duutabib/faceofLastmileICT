@@ -2,16 +2,24 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from sklearn.linear_models import LinearRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 
 
 @pd.api.extensions.register_dataframe_accessor("analyzer")
 class Analyzer:
+    """Class representing data analyzer
+        it takes an a pandas DataFrame, and fits three default models 
+        to data, but can be configured to handle other models.
+    """
     def __init__(self, pandas_obj: pd.DataFrame):
         self._pandas_obj = pandas_obj
 
     class FitResult:
+        """Class representing the FitResult
+            This is a wrapper function that collects the results 
+            for model fitting.  
+        """
         def __init__(self, score: float, mse: float, predictions: NDArray):
             self.score = score
             self.mse = mse
