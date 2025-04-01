@@ -62,3 +62,4 @@ class DataManager:
         """write best version of data in monitoring utility"""
         with open(filename, "wb") as canvas:
             pickle.dump(self._data, canvas, protocol=pickle.HIGHEST_PROTOCOL)
+
