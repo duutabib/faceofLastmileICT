@@ -117,6 +117,6 @@ class Analyzer:
             coef, *_ = np.linalg.lstsq(x_design, y)
             y_pred = x_design @ coef
             poly_mse = self.compute_mse(y, y_pred)
-            fit_dict["poly_model"] = self._make_fit_result(None, poly_mse, poly_y)
+            fit_dict["poly_model"] = self._make_fit_result(None, poly_mse, y_pred)
 
         return fit_dict
