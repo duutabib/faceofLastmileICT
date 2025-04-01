@@ -5,7 +5,9 @@ import pandas as pd
 
 
 class Reader:
-    """Class representing the data reader... """
+    """Class representing the data reader...
+        allows for user configured cols, defaults_cols when usecols is None.
+    """
     default_cols = [
             'Static Pressure', 
             'LPM Rota', 
