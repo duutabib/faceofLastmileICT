@@ -6,7 +6,7 @@ from typing import List, Union
 import pandas as pd
 
 @pd.api.extensions.register_dataframe_accessor("manager")
-class DataManager:
+class Manager:
     """Class representing DataManager"""
 
     def __init__(self, pandas_obj):
