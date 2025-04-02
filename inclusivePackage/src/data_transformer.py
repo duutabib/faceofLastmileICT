@@ -1,11 +1,11 @@
-import numpy as np
+"""Module for data transformations; scaling, converting flow_lph to flow_lpm, etc"""
 import pandas as pd
-from typing import Optional, Any, List
 
 # consider making DataTransformer more general, so I can inherit Flow transformer.
 #
 @pd.api.extensions.register_dataframe_accessor("transformer")
 class Transformer:
+    """Class representing a transformer object"""
     def __init__(self, pandas_obj: pd.DataFrame,  **kwargs):
         self._data= pandas_obj
 
@@ -19,7 +19,7 @@ class Transformer:
         return df
 
     def _scale(self, col_data: pd.Series, scaling_type: str, epsilon:float = 1e-10) -> pd.Series:
-        if scaling_type in ('min-max' | 'normalization'):
+        if scaling_type in ('min-max' or 'normalization'):
             max_value, min_value  = col_data.max(), col_data.min()
             return (col_data - min_value)/ (max_value - min_value + epsilon)
                 
