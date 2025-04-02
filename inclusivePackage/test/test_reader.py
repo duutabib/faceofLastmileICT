@@ -1,4 +1,4 @@
-import pytest
+"""Modudle for testing the data reader class"""
 from src.data_reader import Reader
 
  
