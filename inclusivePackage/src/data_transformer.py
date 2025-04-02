@@ -19,7 +19,7 @@ class Transformer:
         return df
 
     def _scale(self, col_data: pd.Series, scaling_type: str, epsilon:float = 1e-10) -> pd.Series:
-        if scaling_type in ('min-max' or 'normalization'):
+        if scaling_type in ('min-max', 'normalized'):
             max_value, min_value  = col_data.max(), col_data.min()
             return (col_data - min_value)/ (max_value - min_value + epsilon)
                 
