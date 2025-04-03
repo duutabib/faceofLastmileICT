@@ -62,6 +62,7 @@ class Transformer:
 
 
 class FlowTransformer:
+    """Class for Flow transformer  to convert flow_lph to flow_lpm """
     def __init__(self, df: pd.DataFrame):
         self._df = df
 
