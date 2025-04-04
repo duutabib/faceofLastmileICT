@@ -69,7 +69,7 @@ class FlowTransformer:
     def convert_to_flow_lph(self, col: str = 'Flow_lph') -> pd.Series:
         """Convert flow from lph to lpm"""
         if col not in self._df:
-            raise KeyError(f"Column {col} not found.")
+            raise KeyError(f"Colunms {col} not found.")
         return self._df[col]* 0.0166
 
     def apply_lpm_rota_normalization(self, output_lpm: float, Tn: float, KCorrection: float) -> pd.DataFrame:
