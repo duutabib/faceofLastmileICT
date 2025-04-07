@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
+from typing import Callable, Dict
 
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -12,6 +13,49 @@ class Analyzer:
         it takes an a pandas DataFrame, and fits three default models 
         to data, but can be configured to handle other models.
     """
+    # Define term functions as a class-level dispatch table
+    _TERM_FUNCTIONS: Dict[str, Callable[[NDArray, NDArray], NDArray]] = 
+    {
+        '1': lambda x0, x1: np.ones_like(x0),
+        'x0': lambda x0, x1: x0,
+        'x1': lambda x0, x1: x1,
+        'x0^2': lambda x0, x1: np.square(x0),
+        'x0*x1':lambda x0, x1: np.multiply(x0, x1),
+        'x1^2': lambda x0, x1: np.square(x1),
+        # Add more terms as needed, e.g.:
+        'x0^3': lambda x0, x1: np.power(x0, 3),
+        'sin(x0)': lambda x0, x1: np.sin(x0),
+    }
+
+
+    @classmethod
+    def add_term_function(cls, term:str, func:Callable[[NDArray, NDArray], NDArray]):
+        """Add custom term to TERMS_FUNCTIONS"""
+        cls._TERM_FUNCTIONS[term] = func
+
+    @staticmethod
+    def compute_term(term:str, x0:NDArray, x1:NDArray) -> NDArray:
+        """
+        Compute a term for the design matrix
+
+        Args:
+            term: String representing the term (e.g x0^2)
+            x0: first feature
+            x1: second feature
+        
+
+        Returns:
+            compute term as Numpy Array.
+        Raises:
+            Value Error
+    """
+    if term not in Analyzer.TERMS_FUNCTIONS:
+        raise ValueError(f'Unsupported term {term}. Supported terms {list(Analyzer.TERMS_FUNCTIONS.keys())}')
+    result = Analyzer._TERM_FUNCTIONS[term](x0, x1)
+    if result.shape !=x0.shape:
+        raise ValueError(f"Term {term} produced shape {result.shape}, expected {x0.shape}")
+    return np.asarry(result, dtype=x0.dtype)
+
     def __init__(self, pandas_obj: pd.DataFrame):
         self._pandas_obj = pandas_obj
 
@@ -42,7 +86,7 @@ class Analyzer:
         """
         model.fit(X, y)
         score = model.score(X, y)
-        y_pred = model.predict(y)
+        y_pred = model.predict(X)
         mse = self.compute_mse(y, y_pred)
         return self.FitResult(score, mse, y_pred)
 
@@ -67,14 +111,10 @@ class Analyzer:
         """
         if X.shape[1] != 2:
             raise ValueError("X must have exactly 2 features")
-        x0 = X[:, 0]  # static pressure
-        x1 = X[:, 1]  # differential pressure
+        x0, x1= X[:, 0], X[:, 1]  # static, differential pressure
         default_terms = ["1", "x0", "x1", "x0^2", "x0*x1", "x1^2"]
         terms = terms or default_terms
-        design = [
-            np.ones_like(x0) if t == "1" else eval(t, {"x0": x0, "x1": x1})
-            for t in terms
-        ]
+        design = [Analyzer.compute_term(t, x0, x1) for t in terms]
         return np.vstack(design).T
 
     def fit_data(
