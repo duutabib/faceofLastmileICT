@@ -27,6 +27,8 @@ share/python-wheels/
 MANIFEST
 .DS_Store
 *.bak
+*.vscode
+*.code-workspace
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
