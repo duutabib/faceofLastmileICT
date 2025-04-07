@@ -14,8 +14,7 @@ class Analyzer:
         to data, but can be configured to handle other models.
     """
     # Define term functions as a class-level dispatch table
-    _TERM_FUNCTIONS: Dict[str, Callable[[NDArray, NDArray], NDArray]] = 
-    {
+    _TERM_FUNCTIONS: Dict[str, Callable[[NDArray, NDArray], NDArray]] = {
         '1': lambda x0, x1: np.ones_like(x0),
         'x0': lambda x0, x1: x0,
         'x1': lambda x0, x1: x1,
