@@ -66,7 +66,7 @@ class FlowTransformer:
     def __init__(self, df: pd.DataFrame):
         self._df = df
 
-    def convert_to_flow_lph(self, col: str = 'Flow_lph') -> pd.Series:
+    def convert_flow_lph_to_lpm(self, col: str = 'Flow_lph') -> pd.Series:
         """Convert flow from lph to lpm"""
         if col not in self._df:
             raise KeyError(f"Columns {col} not found.")
