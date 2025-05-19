@@ -47,13 +47,13 @@ class Analyzer:
             compute term as Numpy Array.
         Raises:
             Value Error
-    """
-    if term not in Analyzer.TERMS_FUNCTIONS:
-        raise ValueError(f'Unsupported term {term}. Supported terms {list(Analyzer.TERMS_FUNCTIONS.keys())}')
-    result = Analyzer._TERM_FUNCTIONS[term](x0, x1)
-    if result.shape !=x0.shape:
-        raise ValueError(f"Term {term} produced shape {result.shape}, expected {x0.shape}")
-    return np.asarry(result, dtype=x0.dtype)
+        """
+        if term not in Analyzer._TERM_FUNCTIONS:
+            raise ValueError(f'Unsupported term {term}. Supported terms {list(Analyzer._TERM_FUNCTIONS.keys())}')
+        result = Analyzer._TERM_FUNCTIONS[term](x0, x1)
+        if result.shape !=x0.shape:
+            raise ValueError(f"Term {term} produced shape {result.shape}, expected {x0.shape}")
+        return np.asarray(result, dtype=x0.dtype)
 
     def __init__(self, pandas_obj: pd.DataFrame):
         self._pandas_obj = pandas_obj
