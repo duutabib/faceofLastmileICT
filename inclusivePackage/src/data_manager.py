@@ -1,7 +1,8 @@
 import os
 import pickle
 
-from typing import List, Union
+from typing import List, Union, Optional
+from pathlib import Path
 
 import pandas as pd
 
@@ -9,8 +10,22 @@ import pandas as pd
 class Manager:
     """Class representing DataManager"""
 
-    def __init__(self, pandas_obj):
-        """Create a new Data Manager instance"""
+    def __init__(self, pandas_obj: pd.DataFrame) -> None:
+        """Create a new Data Manager instance
+        Args:
+            pandas_obj (pd.DataFrame): pandas DataFrame
+        
+        Raises:
+            ValueError: if pandas_obj is not a pandas DataFrame
+            ValueError: if pandas_obj is empty
+        
+        Returns:
+            None
+        """
+        if not isinstance(pandas_obj, pd.DataFrame):
+            raise ValueError("pandas_obj must be a pandas DataFrame")
+        if pandas_obj.empty:
+            raise ValueError("pandas_obj must not be empty")
         self._data = pandas_obj
 
     def get_col(self, col: Union[str, List[str]]) -> Union[pd.Series, pd.DataFrame]:
@@ -21,10 +36,20 @@ class Manager:
             raise KeyError(f"Columns {col} not in data columns.")
         return self._data.loc[:, col]
 
-    def get_row(self, row: Union[str, int]) -> Union[pd.Series, pd.DataFrame]:
+    def get_row(self, row: List[Union[str, int]]) -> Union[pd.Series, pd.DataFrame]:
+        """Get one or more rows from the data.
+        Args:
+            row (List[Union[str, int]]): list of row indices
+        Returns:
+            pd.Series if single row, pd.DataFrame: selected rows
+        Raises:
+            KeyError: if row not in data rows
+        """
         "Implement for one or many row..."
-        if isinstance(row, Union[str, int]):
+        if isinstance(row, (str, int)):
             row = [row]
+        if not row:
+            return pd.DataFrame(columns=self._data.columns)
         if not all(item in self._data.index for item in row):
             raise KeyError(f"Rows {row} not in data rows")
         return self._data.loc[row, :]
@@ -39,17 +64,22 @@ class Manager:
         "returns the number of cols for data"
         return len(self._data.columns)
 
-    def deduplicate(self, inplace=False) -> pd.Series:
+    def deduplicate(self, subset: List[str] = None, keep: str = "first", inplace=False) -> Optional[pd.DataFrame]:
         "return data without duplicates..."
+        result = self._data.drop_duplicates(subset=subset, keep=keep)
         if inplace:
-            self._data.drop_duplicates(inplace=True)
+            self._data = result
             return None
-        return self._data.drop_duplicates()
+        return result
 
-    def save_csv(self, filename: Union[str, os.PathLike]) -> None:
+    def save_csv(self, filename: Union[str, Path], **kwargs) -> None:
         """save data in csv format..."""
-        with open(filename, "wb") as canvas:
-            self._data.to_csv(canvas)
+        filename = Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            self._data.to_csv(filename, **kwargs)
+        except Exception as e:
+            raise OSError(f"Failed to save data to {filename}: {e}")
 
     def save_excel(self, filename: Union[str, os.PathLike]) -> None:
         """save data in excel format"""
@@ -62,4 +92,15 @@ class Manager:
         """write best version of data in monitoring utility"""
         with open(filename, "wb") as canvas:
             pickle.dump(self._data, canvas, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def get_stats(self) -> pd.DataFrame:
+        """get stats of data"""
+        return self._data.describe()
+    
+    def get_missing_data(self) -> pd.DataFrame:
+        """Get count of missing data
+        Returns:
+            pd.DataFrame: count of missing data
+        """
+        return self._data.isnull().sum()
 
