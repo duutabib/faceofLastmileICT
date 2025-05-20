@@ -47,7 +47,7 @@ class Visualizer:
             additional flags to allow for flexibilty in comparison. 
             Args:
                 color: string; set color for labels
-                figsize: tuple; set size for the fig
+`               figsize: tuple; set size for the fig
                 all: bool; rendering comparison for all models 
                 **kwargs:
         """
