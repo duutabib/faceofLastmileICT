@@ -8,7 +8,6 @@ class Transformer:
     """Class representing a transformer object"""
     def __init__(self, pandas_obj: pd.DataFrame,  **kwargs):
         self._data= pandas_obj
-
     def transform_variable(self, scaling_type: str = 'min-max', epsilon: float=10E-4, axis: int = 1, **kwargs) -> pd.DataFrame:
         """
         return scaled versions of desired variables [typically scales to (0, 1)]
