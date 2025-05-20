@@ -1,11 +1,14 @@
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from typing import Callable, Dict
+from typing import Callable, Dict, Any, Union
 
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.base import BaseEstimator
+from dataclasses import dataclass
 
+ModelType = Union[BaseEstimator, Any]
 
 @pd.api.extensions.register_dataframe_accessor("analyzer")
 class Analyzer:
@@ -19,7 +22,7 @@ class Analyzer:
         'x0': lambda x0, x1: x0,
         'x1': lambda x0, x1: x1,
         'x0^2': lambda x0, x1: np.square(x0),
-        'x0*x1':lambda x0, x1: np.multiply(x0, x1),
+        'x0*x1': lambda x0, x1: np.multiply(x0, x1),
         'x1^2': lambda x0, x1: np.square(x1),
         # Add more terms as needed, e.g.:
         'x0^3': lambda x0, x1: np.power(x0, 3),
@@ -56,13 +59,22 @@ class Analyzer:
         return np.asarray(result, dtype=x0.dtype)
 
     def __init__(self, pandas_obj: pd.DataFrame):
+        """Initialize the analyzer with a pandas DataFrame."""
+        if not isinstance(pandas_obj, pd.DataFrame):
+            raise ValueError("pandas_obj must be a pandas DataFrame")
+        if pandas_obj.empty:
+            raise ValueError("pandas_obj must not be empty")
         self._pandas_obj = pandas_obj
 
+    @dataclass
     class FitResult:
         """Class representing the FitResult
             This is a wrapper function that collects the results 
             for model fitting.      
         """
+        score: float
+        mse: float
+        predictions: NDArray
         def __init__(self, score: float, mse: float, predictions: NDArray):
             self.score = score
             self.mse = mse
@@ -96,6 +108,8 @@ class Analyzer:
         """Compute mean squared error between actual and predicted values.
         Return mse, residuals  for model predictions.
         """
+        if y_actual.shape != y_predicted.shape:
+            raise ValueError("y_actual and y_predicted must have the same shape")
         residuals = y_actual - y_predicted
         return np.mean(residuals**2)
 
@@ -116,13 +130,14 @@ class Analyzer:
         design = [Analyzer.compute_term(t, x0, x1) for t in terms]
         return np.vstack(design).T
 
+
     def fit_data(
         self,
         x_cols: list[str],
         y_col: str,
-        models: dict[str] = None,
+        models: Dict[str, ModelType] = None,
         random_state: int = 42,
-    ) -> dict:
+    ) -> Dict[str, FitResult]:
         """Fit multiple models to data.
         Args:
             x_cols (list[str]) : list of cols of x.
@@ -140,8 +155,11 @@ class Analyzer:
             "dTree_model": DecisionTreeRegressor(random_state=random_state),
         }
 
-        X = self._pandas_obj[x_cols].to_numpy()
-        y = self._pandas_obj[y_col].to_numpy()
+        try: 
+            X = self._pandas_obj[x_cols].to_numpy()
+            y = self._pandas_obj[y_col].to_numpy()
+        except KeyError as e:
+            raise ValueError(f"Column {e} not found in DataFrame")
 
         # init, fit and predict linear regression  model
         # define helper to compute model stats...
