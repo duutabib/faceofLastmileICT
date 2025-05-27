@@ -64,6 +64,7 @@ class Manager:
         "returns the number of cols for data"
         return len(self._data.columns)
 
+    # drop function... duplication of efforts...
     def deduplicate(self, subset: List[str] = None, keep: str = "first", inplace=False) -> Optional[pd.DataFrame]:
         "return data without duplicates..."
         result = self._data.drop_duplicates(subset=subset, keep=keep)
