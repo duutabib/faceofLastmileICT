@@ -1,62 +1,54 @@
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from typing import Callable, Dict, Any, Union
+from typing import Callable, Dict, Any, Union, Type, Optional
+import importlib
+from dataclasses import dataclass
 
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.base import BaseEstimator
-from dataclasses import dataclass
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.metrics import get_scorer
+
+# Import configuration
+from .config import (
+    DEFAULT_TERM_FUNCTIONS,
+    DEFAULT_MODELS,
+    DEFAULT_METRICS,
+    DATA_VALIDATION
+)
 
 ModelType = Union[BaseEstimator, Any]
 
 @pd.api.extensions.register_dataframe_accessor("analyzer")
 class Analyzer:
     """Class representing data analyzer
-        it takes an a pandas DataFrame, and fits three default models 
-        to data, but can be configured to handle other models.
+    It takes a pandas DataFrame and fits configured models to the data.
     """
-    # Define term functions as a class-level dispatch table
-    _TERM_FUNCTIONS: Dict[str, Callable[[NDArray, NDArray], NDArray]] = {
-        '1': lambda x0, x1: np.ones_like(x0),
-        'x0': lambda x0, x1: x0,
-        'x1': lambda x0, x1: x1,
-        'x0^2': lambda x0, x1: np.square(x0),
-        'x0*x1': lambda x0, x1: np.multiply(x0, x1),
-        'x1^2': lambda x0, x1: np.square(x1),
-        # Add more terms as needed, e.g.:
-        'x0^3': lambda x0, x1: np.power(x0, 3),
-        'sin(x0)': lambda x0, x1: np.sin(x0),
-    }
-
+    # Use term functions from config
+    _TERM_FUNCTIONS: Dict[str, Callable[[NDArray, NDArray], NDArray]] = DEFAULT_TERM_FUNCTIONS.copy()
 
     @classmethod
-    def add_term_function(cls, term:str, func:Callable[[NDArray, NDArray], NDArray]):
-        """Add custom term to TERMS_FUNCTIONS"""
+    def add_term_function(cls, term: str, func: Callable[[NDArray, NDArray], NDArray]):
+        """Add custom term to TERM_FUNCTIONS"""
         cls._TERM_FUNCTIONS[term] = func
 
     @staticmethod
-    def compute_term(term:str, x0:NDArray, x1:NDArray) -> NDArray:
+    def compute_term(term: str, x0: NDArray, x1: NDArray) -> NDArray:
         """
         Compute a term for the design matrix
 
         Args:
-            term: String representing the term (e.g x0^2)
-            x0: first feature
-            x1: second feature
-        
+            term: String representing the term (e.g., 'x0^2')
+            x0: First feature array
+            x1: Second feature array
 
         Returns:
-            compute term as Numpy Array.
-        Raises:
-            Value Error
+            Computed term as NumPy array.
         """
         if term not in Analyzer._TERM_FUNCTIONS:
-            raise ValueError(f'Unsupported term {term}. Supported terms {list(Analyzer._TERM_FUNCTIONS.keys())}')
-        result = Analyzer._TERM_FUNCTIONS[term](x0, x1)
-        if result.shape !=x0.shape:
-            raise ValueError(f"Term {term} produced shape {result.shape}, expected {x0.shape}")
-        return np.asarray(result, dtype=x0.dtype)
+            raise ValueError(f"Unknown term: {term}")
+        return Analyzer._TERM_FUNCTIONS[term](x0, x1)
 
     def __init__(self, pandas_obj: pd.DataFrame):
         """Initialize the analyzer with a pandas DataFrame."""
@@ -65,115 +57,101 @@ class Analyzer:
         if pandas_obj.empty:
             raise ValueError("pandas_obj must not be empty")
         self._pandas_obj = pandas_obj
+        self._models = self._initialize_models()
+
+    def _initialize_models(self) -> Dict[str, BaseEstimator]:
+        """Initialize models from configuration."""
+        models = {}
+        for name, cfg in DEFAULT_MODELS.items():
+            module_name, class_name = cfg['class'].rsplit('.', 1)
+            module = importlib.import_module(module_name)
+            model_class = getattr(module, class_name)
+            models[name] = model_class(**(cfg.get('params', {})))
+        return models
 
     @dataclass
     class FitResult:
-        """Class representing the FitResult
-            This is a wrapper function that collects the results 
-            for model fitting.      
-        """
+        """Container for model fitting results."""
+        model_name: str
         score: float
         mse: float
         predictions: NDArray
-        def __init__(self, score: float, mse: float, predictions: NDArray):
-            self.score = score
-            self.mse = mse
-            self.predictions = predictions
+        params: Optional[Dict[str, Any]] = None
 
-    def _make_fit_result(self, score: float, mse: float, predictions: NDArray) -> tuple:
-        "returns an set of model metrics; including predictions"
-        return self.FitResult(score, mse, predictions)
+    def _make_fit_result(self, model_name: str, score: float, mse: float, 
+                        predictions: NDArray, params: Dict[str, Any] = None) -> 'Analyzer.FitResult':
+        """Create a FitResult instance."""
+        return self.FitResult(
+            model_name=model_name,
+            score=score,
+            mse=mse,
+            predictions=predictions,
+            params=params
+        )
 
-    def _fit_model(self, model, X: NDArray, y: NDArray) -> "FitResult":
-        """Compute model score, mean squure error and predictions
-
+    def _fit_model(self, model: BaseEstimator, X: NDArray, y: NDArray, 
+                  model_name: str = 'model') -> FitResult:
+        """
+        Fit a model and compute metrics.
+        
         Args:
-            model_obj: model object, initialized model object
-            X (NDArray): (n, 2) n instances of 2 features from
-            y (NDArray): (n,) instances of dependent variable
-
+            model: The model to fit
+            X: Feature matrix
+            y: Target values
+            model_name: Name of the model for identification
+            
         Returns:
-            an ordered tuple, score, mse, y_pred
+            FitResult containing model metrics and predictions
         """
         model.fit(X, y)
-        score = model.score(X, y)
         y_pred = model.predict(X)
-        mse = self.compute_mse(y, y_pred)
-        return self.FitResult(score, mse, y_pred)
+        mse = float(np.mean((y - y_pred) ** 2))
+        score = model.score(X, y) if hasattr(model, 'score') else None
+        
+        params = None
+        if hasattr(model, 'get_params'):
+            params = model.get_params()
+            
+        return self._make_fit_result(
+            model_name=model_name,
+            score=score,
+            mse=mse,
+            predictions=y_pred,
+            params=params
+        )
 
-    @staticmethod
-    def compute_mse(
-        y_actual: NDArray[np.float64], y_predicted: NDArray[np.float64]
-    ) -> float:
-        """Compute mean squared error between actual and predicted values.
-        Return mse, residuals  for model predictions.
+    def analyze(self, feature_columns: list, target_column: str, 
+               models: Optional[Dict[str, BaseEstimator]] = None) -> Dict[str, FitResult]:
         """
-        if y_actual.shape != y_predicted.shape:
-            raise ValueError("y_actual and y_predicted must have the same shape")
-        residuals = y_actual - y_predicted
-        return np.mean(residuals**2)
-
-    @staticmethod
-    def x_design(X: NDArray, terms: list[str]) -> NDArray:
-        """Creates design matrix X based on terms.
+        Analyze data using configured models.
+        
         Args:
-            X (NDArray[n, 2]): shape (n, 2) or (number of instances, number of features)
-            terms List[str] : form of the function. Default is f(x0, x1)=a* x0^2 + b* x0 + c* x0*x1 + d* x1 + e*x1^2 + f
+            feature_columns: List of column names to use as features
+            target_column: Name of the target column
+            models: Optional dictionary of models to use instead of defaults
+            
         Returns:
-            an array design X for which is of the form
+            Dictionary of FitResult objects keyed by model name
         """
-        if X.shape[1] != 2:
-            raise ValueError("X must have exactly 2 features")
-        x0, x1= X[:, 0], X[:, 1]  # static, differential pressure
-        default_terms = ["1", "x0", "x1", "x0^2", "x0*x1", "x1^2"]
-        terms = terms or default_terms
-        design = [Analyzer.compute_term(t, x0, x1) for t in terms]
-        return np.vstack(design).T
-
-
-    def fit_data(
-        self,
-        x_cols: list[str],
-        y_col: str,
-        models: Dict[str, ModelType] = None,
-        random_state: int = 42,
-    ) -> Dict[str, FitResult]:
-        """Fit multiple models to data.
-        Args:
-            x_cols (list[str]) : list of cols of x.
-            y_col: (n, ) instances of response variable
-            models: dict of models
-            random_state (int): integer to set the random state of model for reproducibility.d
-
-        Returns:
-            return a dictionary `fitDict` of multiple fits for data... including:
-            polynomial fit, decision trees, regresssion
-
-        """
-        default_models = {
-            "lm_model": LinearRegression(),
-            "dTree_model": DecisionTreeRegressor(random_state=random_state),
-        }
-
-        try: 
-            X = self._pandas_obj[x_cols].to_numpy()
-            y = self._pandas_obj[y_col].to_numpy()
-        except KeyError as e:
-            raise ValueError(f"Column {e} not found in DataFrame")
-
-        # init, fit and predict linear regression  model
-        # define helper to compute model stats...
-        # call to and add metrics as
-
-        models = models or default_models
-        fit_dict = {"y_actual": self._make_fit_result(None, None, y)}
-        for name, model in models.items():
-            fit_dict[name] = self._fit_model(model, X, y)
-        if "poly_model" not in models:
-            x_design = self.x_design(X, terms=None)
-            coef, *_ = np.linalg.lstsq(x_design, y)
-            y_pred = x_design @ coef
-            poly_mse = self.compute_mse(y, y_pred)
-            fit_dict["poly_model"] = self._make_fit_result(None, poly_mse, y_pred)
-
-        return fit_dict
+        # Data validation
+        if len(feature_columns) != 2:
+            raise ValueError("Exactly two feature columns must be specified")
+            
+        missing_cols = [col for col in feature_columns + [target_column] 
+                      if col not in self._pandas_obj.columns]
+        if missing_cols:
+            raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
+            
+        # Prepare data
+        X = self._pandas_obj[feature_columns].values
+        y = self._pandas_obj[target_column].values
+        
+        # Use provided models or defaults
+        models_to_fit = models or self._models
+        
+        # Fit models and collect results
+        results = {}
+        for name, model in models_to_fit.items():
+            results[name] = self._fit_model(model, X, y, model_name=name)
+            
+        return results
