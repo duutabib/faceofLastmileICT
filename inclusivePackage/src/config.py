@@ -3,6 +3,7 @@ from typing import Dict, Callable
 import numpy as np
 from numpy.typing import NDArray
 
+
 # Default term functions for the Analyzer class
 DEFAULT_TERM_FUNCTIONS: Dict[str, Callable[[NDArray, NDArray], NDArray]] = {
     '1': lambda x0, x1: np.ones_like(x0),
