@@ -17,11 +17,11 @@ class Reader:
             'DP_mV', 
             'Differential_Pa', 
             'Flow_lph', 
-            'ideal flow', 
+            'ideal flow ', 
             'cd',
     ]
 
-    def __init__(self, filename: Optional[str],  usecols: list[str], **kwargs):
+    def __init__(self, filename: Optional[str], usecols: list[str] = None, **kwargs):
         self.filename = filename
         self.usecols = usecols if usecols is not None else self.default_cols
         self.kwargs = kwargs
