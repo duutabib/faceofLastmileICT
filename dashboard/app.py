@@ -1,3 +1,6 @@
+import os
+import sys
+import tempfile
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -5,7 +8,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from pathlib import Path
-import sys
 import matplotlib.pyplot as plt
 from scipy import stats
 from sklearn.linear_model import LinearRegression
@@ -101,10 +103,23 @@ with st.sidebar:
 def load_data(uploaded_file=None, use_sample=False):
     if uploaded_file is not None:
         try:
+            # Save the uploaded file to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.csv' if uploaded_file.name.endswith('.csv') else '.xlsx') as tmp_file:
+                tmp_file.write(uploaded_file.getvalue())
+                tmp_file_path = tmp_file.name
+
+            # Read the file using Reader
             if uploaded_file.name.endswith('.csv'):
-                df = Reader(uploaded_file).read_csv()
+                df = Reader(tmp_file_path).read_csv()
             else:
-                df = Reader(uploaded_file).read_excel()
+                df = Reader(tmp_file_path).read_excel()
+            
+            # Clean up the temporary file
+            try:
+                os.unlink(tmp_file_path)
+            except:
+                pass
+                
             st.session_state.df = df
             st.success("Data loaded successfully!")
             return df
