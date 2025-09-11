@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+exclude = '''
+/(
+    \.github
+    | \.vscode
+    | \.conda
+    | \.pytest_cache
+)/
+'''
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+strict = true
+packages = ["inclusivePackage"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "--cov=inclusivePackage --cov-report=xml --junitxml=pytest-results.xml"
+
+[coverage.run]
+source = ["inclusivePackage"]
+omit = ["tests/*"]
+
+[coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise ImportError",
+    "raise NotImplementedError"
+]
