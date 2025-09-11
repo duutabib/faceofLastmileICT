@@ -41,6 +41,7 @@ try:
     from src.data_manager import Manager
     from src.data_analyzer import Analyzer
     from src.data_visualizer import Visualizer
+    from src.data_transformer import Transformer, FlowTransformer
 except ImportError as e:
     st.error(f"Error importing project modules: {e}")
     st.stop()
@@ -240,13 +241,47 @@ def main():
                 model_name = f"Decision Tree (max_depth={max_depth})"
             
             try:
-                # Use common LabFit variables if available
-                x_col_default = 'Differential_Pa' if 'Differential_Pa' in df.columns else x_col
+                # Let user select multiple features for X
+                st.sidebar.subheader("Feature Selection")
+                available_features = [col for col in df.select_dtypes(include=['number']).columns 
+                                   if col != y_col and df[col].count() > 0]
+                
+                # Default features if they exist
+                default_features = [col for col in ['Differential_Pa', 'Static Pressure'] 
+                                 if col in available_features]
+                
+                # If no default features, use the first numeric column
+                if not default_features and available_features:
+                    default_features = [available_features[0]]
+                
+                # Multi-select widget for features
+                x_cols = st.sidebar.multiselect(
+                    "Select features for X (independent variables):",
+                    options=available_features,
+                    default=default_features,
+                    format_func=lambda x: f"{x}"
+                )
+                
+                # If no features selected, use defaults
+                if not x_cols and default_features:
+                    x_cols = default_features
+                elif not x_cols and available_features:
+                    x_cols = [available_features[0]]
+                
+                # Set default y column
                 y_col_default = 'Flow_lph' if 'Flow_lph' in df.columns else y_col
                 
-                # Prepare data
-                X = df[[x_col_default]]
-                y = df[y_col_default]
+                # Convert flow from LPH to LPM if needed
+                if y_col_default == 'Flow_lph':
+                    transformer = FlowTransformer(df)
+                    y = transformer.convert_flow_lph_to_lpm()
+                    y_col_display = 'Flow_lpm'  # Update column name for display
+                else:
+                    y = df[y_col_default]
+                    y_col_display = y_col_default
+                
+                # Prepare features
+                X = df[x_cols]
                 
                 # Handle potential NaN values
                 if X.isna().any().any() or y.isna().any():
@@ -256,64 +291,161 @@ def main():
                     y = y[mask]
                 
                 # Convert to numpy arrays
-                X = X.values.reshape(-1, 1)
-                y = y.values
+                X_values = X.values
+                y_values = y.values
                 
                 # Fit model
-                model.fit(X, y)
-                y_pred = model.predict(X)
+                model.fit(X_values, y_values)
+                y_pred = model.predict(X_values)
                 
                 # Calculate residuals
-                residuals = y - y_pred
+                residuals = y_values - y_pred
                 
-                # Create figure with subplots
+                # Create subplots
                 fig = make_subplots(
                     rows=1, cols=2,
                     subplot_titles=(
-                        f"{model_name} Fit: {y_col_default} vs {x_col_default}",
+                        f"{model_name} Fit: {y_col_default} vs {x_cols[0]}",
                         "Residual Plot"
                     ),
                     column_widths=[0.7, 0.3]
                 )
-                
-                # Add scatter plot with actual data
+
+                # Plot actual vs predicted (using first feature for x-axis)
                 fig.add_trace(
                     go.Scatter(
-                        x=X.flatten(),
-                        y=y,
+                        x=X_values[:, 0],  # Use first feature for x-axis
+                        y=y_values,
                         mode='markers',
                         name='Actual',
-                        marker=dict(
-                            color='blue',
-                            opacity=0.7,
-                            size=8,
-                            line=dict(width=1, color='DarkSlateGrey')
-                        )
+                        marker=dict(color='blue', opacity=0.6),
+                        customdata=np.column_stack((X_values, y_values)),
+                        hovertemplate=
+                            f'Actual {y_col_display}: %{{y:.2f}}<br>' +
+                            '<br>'.join([f'{col}: %{{customdata[0][' + str(i) + ']:.2f}' for i, col in enumerate(x_cols)]) +
+                            '<extra></extra>'
                     ),
                     row=1, col=1
                 )
                 
-                # Add regression line
-                x_range = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
-                if hasattr(model, 'predict'):
-                    y_range = model.predict(x_range)
-                else:
-                    y_range = model.predict(x_range.reshape(-1, 1))
+                # Add regression surface or line
+                if len(x_cols) == 1:
+                    # For single feature, show regression line
+                    x1_range = np.linspace(X_values[:, 0].min(), X_values[:, 0].max(), 100)
+                    X_range = x1_range.reshape(-1, 1)
+                    y_range = model.predict(X_range)
                     
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_range.flatten(),
-                        y=y_range,
-                        mode='lines',
-                        name=f'{model_name} Fit',
-                        line=dict(
-                            color='red',
-                            width=3,
-                            dash='solid'
+                    fig.add_trace(
+                        go.Scatter(
+                            x=x1_range,
+                            y=y_range,
+                            mode='lines',
+                            name=f'{model_name} Fit',
+                            line=dict(color='red', width=2)
+                        ),
+                        row=1, col=1
+                    )
+                else:
+                    # For multiple features, show a 3D surface or multiple lines
+                    if len(x_cols) == 2:
+                        # For 2 features, show a 3D surface
+                        x1_range = np.linspace(X_values[:, 0].min(), X_values[:, 0].max(), 20)
+                        x2_range = np.linspace(X_values[:, 1].min(), X_values[:, 1].max(), 20)
+                        x1_grid, x2_grid = np.meshgrid(x1_range, x2_range)
+                        
+                        # Create grid of points for prediction
+                        X_grid = np.column_stack([
+                            x1_grid.ravel(),
+                            x2_grid.ravel(),
+                            # Add means for any additional features
+                            *[np.full_like(x1_grid.ravel(), X_values[:, i].mean()) 
+                              for i in range(2, len(x_cols))]
+                        ])
+                        
+                        # Make predictions and reshape for surface
+                        y_grid = model.predict(X_grid).reshape(x1_grid.shape)
+                        
+                        # Add 3D surface
+                        fig.add_trace(
+                            go.Surface(
+                                x=x1_grid,
+                                y=x2_grid,
+                                z=y_grid,
+                                name=f'{model_name} Fit',
+                                colorscale='Viridis',
+                                opacity=0.7,
+                                showscale=False
+                            ),
+                            row=1, col=1
                         )
-                    ),
-                    row=1, col=1
-                )
+                        
+                        # Add scatter points on top
+                        fig.add_trace(
+                            go.Scatter3d(
+                                x=X_values[:, 0],
+                                y=X_values[:, 1],
+                                z=y_values,
+                                mode='markers',
+                                name='Actual',
+                                marker=dict(size=4, color='blue', opacity=0.8),
+                                showlegend=False
+                            ),
+                            row=1, col=1
+                        )
+                        
+                        # Update layout for 3D
+                        fig.update_layout(
+                            scene=dict(
+                                xaxis_title=x_cols[0],
+                                yaxis_title=x_cols[1],
+                                zaxis_title=y_col_display
+                            )
+                        )
+                    else:
+                        # For more than 2 features, show multiple lines for the first two features
+                        # while holding other features at their mean
+                        x1_range = np.linspace(X_values[:, 0].min(), X_values[:, 0].max(), 100)
+                        
+                        # Create grid with first feature varying, second feature at 3 different levels,
+                        # and other features at their mean
+                        for x2_val in np.percentile(X_values[:, 1], [25, 50, 75]):
+                            X_range = np.column_stack([
+                                x1_range,
+                                np.full_like(x1_range, x2_val),
+                                *[np.full_like(x1_range, X_values[:, i].mean()) 
+                                  for i in range(2, len(x_cols))]
+                            ])
+                            
+                            y_range = model.predict(X_range)
+                            
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=x1_range,
+                                    y=y_range,
+                                    mode='lines',
+                                    name=f'{model_name} ({x_cols[1]} = {x2_val:.2f})',
+                                    line=dict(width=2)
+                                ),
+                                row=1, col=1
+                            )
+                
+                # Update layout based on number of features
+                if len(x_cols) == 1:
+                    fig.update_layout(
+                        xaxis_title=x_cols[0],  # Use first feature name for x-axis
+                        yaxis_title=y_col_display,  # Use the correct unit (LPM if converted)
+                        xaxis2_title="Predicted Values",
+                        yaxis2_title="Residuals",
+                        margin=dict(l=50, r=50, t=80, b=80),
+                        hovermode='closest',
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        )
+                    )
                 
                 # Add residuals with hover information
                 fig.add_trace(
@@ -328,12 +460,13 @@ def main():
                             opacity=0.7,
                             line=dict(width=1, color='DarkSlateGrey')
                         ),
-                        customdata=np.stack((X.flatten(), y), axis=-1),
+                        customdata=np.column_stack((X_values, y_values)),
                         hovertemplate=
                             'Predicted: %{x:.2f}<br>' +
                             'Residual: %{y:.2f}<br>' +
-                            f'{x_col_default}: %{{customdata[0]:.2f}}<br>' +
-                            f'{y_col_default}: %{{customdata[1]:.2f}}' +
+                            f'{x_cols[0]}: %{{customdata[0]:.2f}}<br>' +
+                            (f'{x_cols[1]}: %{{customdata[1]:.2f}}<br>' if len(x_cols) > 1 else '') +
+                            f'{y_col_default}: %{{customdata[{len(x_cols)}]:.2f}}' +
                             '<extra></extra>'
                     ),
                     row=1, col=2
@@ -346,7 +479,7 @@ def main():
                 fig.update_layout(
                     height=600,
                     showlegend=True,
-                    xaxis_title=x_col_default,
+                    xaxis_title=x_cols[0],  # Use first feature name for x-axis
                     yaxis_title=y_col_default,
                     xaxis2_title="Predicted Values",
                     yaxis2_title="Residuals",
