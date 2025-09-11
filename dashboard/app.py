@@ -136,8 +136,8 @@ def main():
         st.header("Data Analysis")
         
         # Initialize analyzer and visualizer
-        analyzer = DataAnalyzer(df)
-        visualizer = DataVisualizer(df)
+        analyzer = Analyzer(df)
+        visualizer = Visualizer(df)
         
         # Time series visualization
         if 'date' in df.columns:
