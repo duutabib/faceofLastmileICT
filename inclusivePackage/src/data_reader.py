@@ -23,13 +23,11 @@ class Reader:
 
     def __init__(self, filename: Optional[str],  usecols: list[str], **kwargs):
         self.filename = filename
-        self.usecols = usecols
+        self.usecols = usecols if usecols is not None else self.default_cols
         self.kwargs = kwargs
         
     def read_csv(self):
         """Reads CSV and returns DataFrame..."""
-        if not self.usecols:
-            self.usecols = Reader.default_cols
         if not self.filename:
             raise ValueError("Cannot initialize Reader, filename not set or specified.")
         if not os.path.exists(self.filename):
@@ -38,8 +36,6 @@ class Reader:
 
     def read_excel(self):
         """Reads Excel and returns DataFrame..."""
-        if not self.usecols:
-            self.usecols = Reader.default_cols
         if not self.filename:
             raise ValueError("Cannot initialize Reader, filename not set or specified.")
         if not os.path.exists(self.filename):
