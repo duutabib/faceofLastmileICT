@@ -37,7 +37,7 @@ class Visualizer:
             "actual model: y-actual vs y_pred",
     ]
 
-    def apply_model_visualizer(self, models, color: str ='blue', figsize: tuple = (20, 20), all: bool, **kwargs) -> Optional[list]:
+    def apply_model_visualizer(self, models, all: bool=True, color: str ='blue', figsize: tuple = (20, 20),  **kwargs) -> Optional[list]:
         # all param (bool) = control number of fits compared...
 
         """Visual model predictions against actual data."""
@@ -58,7 +58,7 @@ class Visualizer:
         fig0 = plt.figure(figsize= figsize, constrained_layout=True)
         ncols=len(models)
         w1, w2 = 20, 1
-        gspec=gridspec.GridSpec(ncols=ncols, nrows=1, figure=fig0, width_ratios=[w1, w2]))
+        gspec=gridspec.GridSpec(ncols=ncols, nrows=1, figure=fig0, width_ratios=[w1, w2])
         y_actual = self.fit_dict.get('y_actual', pd.Series())
 
         for i, model_key in enumerate(models):
