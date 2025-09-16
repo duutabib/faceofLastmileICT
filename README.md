@@ -1,36 +1,39 @@
-# Inclusive Energy Data Pipeline
+# Inclusive Energy Analytics Platform
 
-This repository contains a comprehensive data processing and analysis pipeline developed for Inclusive Energy. The system streamlines data acquisition, processing, and analysis, eliminating the need for manual data movement between Excel and analysis tools like LabFit.
+This repository contains a comprehensive data processing, analysis, and visualization platform for Inclusive Energy. The system provides an interactive web interface for exploring and analyzing energy data, along with robust backend processing capabilities.
 
 ## Features
 
-- **Data Management**: Robust data handling and manipulation utilities
-- **Data Analysis**: Advanced analytics and modeling capabilities
-- **Visualization**: Tools for generating insightful visualizations
-- **LabFit Integration**: Seamless integration with LabFit for data fitting
-- **Venting Algorithm**: Specialized algorithm for venting analysis
-- **Carbon Credit Monitoring**: Tools for tracking and analyzing carbon credits
+- **Interactive Dashboard**: Streamlit-based web interface for data exploration
+- **Advanced Analytics**: Regression analysis, correlation studies, and statistical modeling
+- **LabFit Integration**: Built-in support for LabFit data analysis
+- **Data Visualization**: Interactive plots and charts using Plotly
+- **Machine Learning**: Support for various regression models (Linear, Polynomial, Decision Trees)
+- **Data Management**: Tools for data cleaning, transformation, and analysis
 
 ## Project Structure
 
 ```
-inclusivePackage/
-├── src/
-│   ├── data_manager.py    # Core data management utilities
-│   ├── data_analyzer.py   # Data analysis and modeling
-│   ├── data_visualizer.py # Data visualization tools
-│   ├── data_retriever.py  # Data retrieval from various sources
-│   ├── data_transformer.py # Data transformation utilities
-│   └── config.py          # Configuration settings
-├── tests/                 # Unit and integration tests
-└── data/                  # Data storage directory (not versioned)
+inclusiveEnergy/
+├── dashboard/              # Streamlit dashboard application
+│   └── app.py             # Main dashboard application
+├── inclusivePackage/       # Core Python package
+│   ├── src/               # Source code
+│   │   ├── data_manager.py     # Data management utilities
+│   │   ├── data_transformer.py # Data transformation logic
+│   │   └── ...
+│   └── tests/             # Unit and integration tests
+├── experimental/          # Experimental code and notebooks
+├── data/                  # Data storage directory (not versioned)
+├── requirements-dashboard.txt  # Dashboard dependencies
+└── setup.py               # Package installation script
 ```
 
 ## Installation
 
 1. Clone the repository:
    ```bash
-   git clone git@github.com:lastmileICT/venturi-testing.git
+   git clone https://github.com/lastmileICT/venturi-testing.git
    cd venturi-testing
    ```
 
@@ -40,74 +43,80 @@ inclusivePackage/
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Install the package in development mode:
+3. Install the core package in development mode:
    ```bash
    pip install -e .
    ```
 
-4. Install development dependencies:
+4. Install dashboard dependencies:
    ```bash
-   pip install -r requirements-dev.txt
+   pip install -r requirements-dashboard.txt
    ```
+
+## Running the Dashboard
+
+To start the interactive dashboard:
+
+```bash
+cd dashboard
+streamlit run app.py
+```
+
+The dashboard will be available at `http://localhost:8501`
 
 ## Usage
 
-### Basic Data Operations
+### Using the Dashboard
+
+The dashboard provides a user-friendly interface for data analysis:
+
+1. **Data Upload**: Upload your CSV/Excel file or use the sample data
+2. **Data Exploration**: View data summary, statistics, and visualizations
+3. **Model Fitting**: Fit various regression models to your data
+4. **Correlation Analysis**: Explore relationships between variables
+
+### Programmatic Usage
+
+You can also use the core package programmatically:
 
 ```python
 import pandas as pd
-from inclusivePackage.src import data_manager
+from inclusivePackage.src import data_transformer
 
-# Load and manage data
+# Load and transform data
 df = pd.read_csv('path/to/your/data.csv')
+transformer = data_transformer.FlowTransformer(df)
 
-# Use the custom manager accessor
-df.manager.clean_data()
-df.manager.deduplicate()
+# Convert flow from LPH to LPM
+flow_lpm = transformer.convert_flow_lph_to_lpm()
 
-# Access processed data
-processed_df = df.manager.get_processed_data()
+# Perform data analysis
+# ...
 ```
 
-### Data Analysis
+## Development
 
-```python
-from inclusivePackage.src import data_analyzer
+To contribute to the project:
 
-# Initialize analyzer
-analyzer = data_analyzer.DataAnalyzer(processed_df)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
 
-# Run analysis
-results = analyzer.analyze()
-summary = analyzer.get_summary_statistics()
-```
-
-### Visualization
-
-```python
-from inclusivePackage.src import data_visualizer
-
-# Create visualizations
-visualizer = data_visualizer.DataVisualizer(processed_df)
-visualizer.plot_timeseries(x='date', y='value', title='Time Series Analysis')
-visualizer.save_plot('timeseries_plot.png')
-```
-
-### Configuration
-
-Modify `config.py` to set up:
-- Data source paths
-- Output directories
-- Analysis parameters
-- Visualization settings
-
-## Running Tests
+### Running Tests
 
 ```bash
-pytest tests/
+pytest
 ```
 
-## Contributing
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For questions or support, please open an issue in the repository.
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
