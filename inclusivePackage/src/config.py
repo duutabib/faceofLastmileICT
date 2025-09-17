@@ -44,3 +44,19 @@ DATA_VALIDATION = {
     'min_rows': 1,
     'max_nan_ratio': 0.5
 }
+
+# LabFit Constants
+LABFIT_CONSTANTS = {
+    'A': 0.21334,
+    'B': 0.14933,
+    'C': 0.033616,
+    'D': 0.023546,
+    'output_lpm': 100000,  # atm pressure in Pa
+    'Tsb': 30.66,
+    'KCorrection': 273.15,  # Kelvin temp correction
+    'Tn': 293.15,  # standard temperature in Kelvin (20°C)
+    'A1': 0.0005366622509, # diameter 1
+    'A2': 0.0002010619298, # diameter 2
+    'r0': 1.184,
+    'epsilon': 0.1
+}
