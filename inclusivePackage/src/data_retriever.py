@@ -11,11 +11,10 @@ class Retriever:
         if not self.is_connected:
             'establish connection'
         return self.is_connected
-
     def get_data(self):
         # get data from source
         # data from source
         if self.connector():
             'source data and write to csv or EXcel'
-            'More details to implement...'
+            'More dhrptails to implement...'
         return 0 
