@@ -17,7 +17,6 @@ class Reader:
             'DP_mV', 
             'Differential_Pa', 
             'Flow_lph', 
-            'ideal flow ', 
             'cd',
     ]
 
