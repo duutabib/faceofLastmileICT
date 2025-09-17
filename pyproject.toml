@@ -1,6 +1,17 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "inclusive-package"
+version = "0.1.0"
+description = "Inclusive package for face of last mile ICT"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "inclusivePackage"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
 
 [tool.black]
 line-length = 88
